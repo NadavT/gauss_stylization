@@ -5,7 +5,7 @@ import os
 from load_model import load
 from precompute import Precompute
 from g_function import g_Function
-from calculate import single_iteration
+from calculate import Calculate
 import copy
 from time import time
 from math import sqrt
@@ -18,29 +18,29 @@ model_v, model_f = load(os.path.join(root_folder, "data", "cat_s3.off"))
 
 p = pv.Plotter(shape=(1,2))
 
-precompute = Precompute(model_v, model_f)
+precomputed = Precompute(model_v, model_f)
+
+N = [
+		np.array([1,0,0]), np.array([-1,0,0]),
+		np.array([0,1,0]), np.array([0,-1,0]),
+		np.array([0,0,1]), np.array([0,0,-1]),
+	]
 
 # N = [
-# 		np.array([1,0,0]), np.array([-1,0,0]),
-# 		np.array([0,1,0]), np.array([0,-1,0]),
-# 		np.array([0,0,1]), np.array([0,0,-1]),
+# 		np.array([-1,0,0]),
+# 		np.array([2, 1, 1]),
+# 		np.array([2, 1, -1]),
+# 		np.array([2, -1, 1]),
+# 		np.array([2, -1, -1]),
 # 	]
 
-N = [
-		np.array([-1,0,0]),
-		np.array([2, 1, 1]),
-		np.array([2, 1, -1]),
-		np.array([2, -1, 1]),
-		np.array([2, -1, -1]),
-	]
-
-N = [
-		np.array([ 0, -1,  0]),
-		np.array([ 1,  2,  1]),
-		np.array([ 1,  2, -1]),
-		np.array([-1,  2,  1]),
-		np.array([-1,  2, -1]),
-	]
+# N = [
+# 		np.array([ 0, -1,  0]),
+# 		np.array([ 1,  2,  1]),
+# 		np.array([ 1,  2, -1]),
+# 		np.array([-1,  2,  1]),
+# 		np.array([-1,  2, -1]),
+# 	]
 N = [n / np.linalg.norm(n) for n in N]
 sigma = 8
 mu = 1
@@ -72,6 +72,8 @@ p.reset_camera()
 
 # _ = p.add_text_slider_widget(callback=select_model, data=["model", "sphere"], value=0)
 
+calc = Calculate(model_v, model_f, precomputed, g)
+
 iterations_amount = 1
 def change_iterations_amount(iterations):
 	global iterations_amount
@@ -85,7 +87,7 @@ def iterate():
 	for _ in range(iterations_amount):
 		print("start")
 		s = time()
-		single_iteration(model_v, modified_v, model_f, 1, precompute, g)
+		calc.single_iteration(modified_v, 5)
 		print(f"end: {time() - s}")
 		model_mesh = pv.PolyData(modified_v, np.concatenate(([[3]] * model_f.shape[0], model_f), axis=1))
 		p.subplot(0,0)
