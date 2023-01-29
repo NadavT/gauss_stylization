@@ -9,107 +9,98 @@ from calculate import Calculate
 import copy
 from time import time
 from math import sqrt
+import argparse
+import functions
 
-root_folder = os.getcwd()
+if __name__ == "__main__":
+	root_folder = os.getcwd()
+	parser = argparse.ArgumentParser(
+                    prog = 'gauss_stylization')
+	parser.add_argument('--model', type=str, default='cat_s3.off', help='model to stylize')
+	parser.add_argument('--sigma', type=float, default=8, help='sigma')
+	parser.add_argument('--mu', type=float, default=1, help='mu')
+	parser.add_argument('--lambda_value', type=float, default=4, help='lambda')
 
-sphere_v, sphere_f = load(os.path.join(root_folder, "data", "sphere_s3.off"), normalize=False)
-# model_v, model_f = load(os.path.join(root_folder, "data", "sphere_s2.off"))
-model_v, model_f = load(os.path.join(root_folder, "data", "cat_s3.off"))
+	sphere_v, sphere_f = load(os.path.join(root_folder, "data", "sphere_s3.off"), normalize=False)
+	model_v, model_f = load(os.path.join(root_folder, "data", parser.parse_args().model))
 
-p = pv.Plotter(shape=(1,2))
+	precomputed = Precompute(model_v, model_f)
 
-precomputed = Precompute(model_v, model_f)
+	p = pv.Plotter(shape=(1,2))
 
-N = [
-		np.array([1,0,0]), np.array([-1,0,0]),
-		np.array([0,1,0]), np.array([0,-1,0]),
-		np.array([0,0,1]), np.array([0,0,-1]),
-	]
+	modified_v = copy.deepcopy(model_v)
+	g = functions.cube(parser.parse_args().sigma, parser.parse_args().mu, parser.parse_args().lambda_value)
+	deformed_sphere = np.array([v * g.value(v) for v in sphere_v[:]])
 
-# N = [
-# 		np.array([-1,0,0]),
-# 		np.array([2, 1, 1]),
-# 		np.array([2, 1, -1]),
-# 		np.array([2, -1, 1]),
-# 		np.array([2, -1, -1]),
-# 	]
+	# Create the polydata object
+	sphere_mesh = pv.PolyData(deformed_sphere, np.concatenate(([[3]] * sphere_f.shape[0], sphere_f), axis=1))
+	model_mesh = pv.PolyData(modified_v, np.concatenate(([[3]] * model_f.shape[0], model_f), axis=1))
 
-# N = [
-# 		np.array([ 0, -1,  0]),
-# 		np.array([ 1,  2,  1]),
-# 		np.array([ 1,  2, -1]),
-# 		np.array([-1,  2,  1]),
-# 		np.array([-1,  2, -1]),
-# 	]
-N = [n / np.linalg.norm(n) for n in N]
-sigma = 8
-mu = 1
-lambda_value = 4
-g = g_Function(N, sigma, mu, lambda_value)
+	p.subplot(0,0)
+	actor = p.add_mesh(model_mesh)
+	p.reset_camera()
 
-modified_v = copy.deepcopy(model_v)
-# single_iteration(model_v, modified_v, model_f, 1, precompute, g)
+	calc = Calculate(model_v, model_f, precomputed, g)
 
-deformed_sphere = np.array([v * g.value(v) for v in sphere_v[:]])
+	iterations_amount = 1
+	def change_iterations_amount(iterations):
+		global iterations_amount
+		iterations_amount = int(iterations)
+	_ = p.add_text_slider_widget(callback=change_iterations_amount, data=list(map(str, range(1,101))), value=0)
 
-# Create the polydata object
-sphere_mesh = pv.PolyData(deformed_sphere, np.concatenate(([[3]] * sphere_f.shape[0], sphere_f), axis=1))
-model_mesh = pv.PolyData(modified_v, np.concatenate(([[3]] * model_f.shape[0], model_f), axis=1))
+	def iterate():
+		global actor
+		global modified_v
+		global model_mesh
+		for _ in range(iterations_amount):
+			print("start")
+			s = time()
+			calc.single_iteration(modified_v, 1)
+			print(f"end: {time() - s}")
+			model_mesh = pv.PolyData(modified_v, np.concatenate(([[3]] * model_f.shape[0], model_f), axis=1))
+			p.subplot(0,0)
+			p.remove_actor(actor)
+			actor = p.add_mesh(model_mesh)
+			p.reset_camera()
+	_ = p.add_key_event("space", iterate)
 
-p.subplot(0,0)
-actor = p.add_mesh(model_mesh)
-p.reset_camera()
-
-# def select_model(selection):
-# 	global actor
-# 	p.subplot(0,0)
-# 	if selection == "model":
-# 		p.remove_actor(actor)
-# 		actor = p.add_mesh(model_mesh)
-# 	else:
-# 		p.remove_actor(actor)
-# 		actor = p.add_mesh(sphere_mesh)
-
-# _ = p.add_text_slider_widget(callback=select_model, data=["model", "sphere"], value=0)
-
-calc = Calculate(model_v, model_f, precomputed, g)
-
-iterations_amount = 1
-def change_iterations_amount(iterations):
-	global iterations_amount
-	iterations_amount = int(iterations)
-_ = p.add_text_slider_widget(callback=change_iterations_amount, data=list(map(str, range(1,101))), value=0)
-
-def iterate():
-	global actor
-	global modified_v
-	global model_mesh
-	for _ in range(iterations_amount):
-		print("start")
-		s = time()
-		calc.single_iteration(modified_v, 5)
-		print(f"end: {time() - s}")
+	def reset():
+		global actor
+		global modified_v
+		global model_mesh
+		modified_v = copy.deepcopy(model_v)
 		model_mesh = pv.PolyData(modified_v, np.concatenate(([[3]] * model_f.shape[0], model_f), axis=1))
+
 		p.subplot(0,0)
 		p.remove_actor(actor)
 		actor = p.add_mesh(model_mesh)
 		p.reset_camera()
-_ = p.add_key_event("space", iterate)
-
-def reset():
-	global actor
-	global modified_v
-	global model_mesh
-	modified_v = copy.deepcopy(model_v)
-	model_mesh = pv.PolyData(modified_v, np.concatenate(([[3]] * model_f.shape[0], model_f), axis=1))
-	p.subplot(0,0)
-	p.remove_actor(actor)
-	actor = p.add_mesh(model_mesh)
-	p.reset_camera()
-_ = p.add_key_event("z", reset)
+	_ = p.add_key_event("z", reset)
 
 
-p.subplot(0,1)
-p.add_mesh(sphere_mesh)
+	p.subplot(0,1)
+	function_actor =p.add_mesh(sphere_mesh)
 
-p.show()
+	def switch_function(function):
+		global sphere_mesh
+		global calc
+		global function_actor
+		if function == "cube":
+			g = functions.cube(parser.parse_args().sigma, parser.parse_args().mu, parser.parse_args().lambda_value)
+		elif function == "pyramid x":
+			g = functions.pyramid_x(parser.parse_args().sigma, parser.parse_args().mu, parser.parse_args().lambda_value)
+		elif function == "pyramid y":
+			g = functions.pyramid_y(parser.parse_args().sigma, parser.parse_args().mu, parser.parse_args().lambda_value)
+		elif function == "pyramid z":
+			g = functions.pyramid_z(parser.parse_args().sigma, parser.parse_args().mu, parser.parse_args().lambda_value)
+		calc = Calculate(model_v, model_f, precomputed, g)
+		deformed_sphere = np.array([v * g.value(v) for v in sphere_v[:]])
+		sphere_mesh = pv.PolyData(deformed_sphere, np.concatenate(([[3]] * sphere_f.shape[0], sphere_f), axis=1))
+
+		p.subplot(0,1)
+		p.remove_actor(function_actor)
+		function_actor = p.add_mesh(sphere_mesh)
+		p.reset_camera()
+	_ = p.add_text_slider_widget(callback=switch_function, data=["cube", "pyramid x", "pyramid y", "pyramid z"], value=0)
+
+	p.show()
