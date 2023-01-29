@@ -1,0 +1,12 @@
+name: dgp
+channels:
+  - defaults
+dependencies:
+  - jupyter
+  - igl
+  - meshplot
+  - plotly
+  - pandas
+  - tqdm
+  - pyvista
+  - autopep8
