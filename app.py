@@ -8,7 +8,6 @@ from g_function import g_Function
 from calculate import Calculate
 import copy
 from time import time
-from math import sqrt
 import argparse
 import functions
 
@@ -23,6 +22,8 @@ if __name__ == "__main__":
     parser.add_argument('--lambda_value', type=float, default=4, help='lambda')
     parser.add_argument('--caxiscontrib', type=float,
                         default=0.5, help='caxiscontrib')
+    parser.add_argument('--admm_iterations', type=int,
+                        default=1, help="admm iterations")
 
     sphere_v, sphere_f = load(os.path.join(
         root_folder, "data", "sphere_s3.off"), normalize=False)
@@ -65,7 +66,7 @@ if __name__ == "__main__":
         for _ in range(iterations_amount):
             print("start")
             s = time()
-            calc.single_iteration(modified_v, 1)
+            calc.single_iteration(modified_v, parser.parse_args().admm_iterations)
             print(f"end: {time() - s}")
             model_mesh = pv.PolyData(modified_v, np.concatenate(
                 ([[3]] * model_f.shape[0], model_f), axis=1))
@@ -117,6 +118,15 @@ if __name__ == "__main__":
         elif function == "cylinder z":
             g = functions.cylinder_z(parser.parse_args().sigma, parser.parse_args(
             ).mu, parser.parse_args().lambda_value, parser.parse_args().caxiscontrib)
+        elif function == "cone x":
+            g = functions.cone_x(parser.parse_args().sigma, parser.parse_args(
+            ).mu, parser.parse_args().lambda_value, parser.parse_args().caxiscontrib)
+        elif function == "cone y":
+            g = functions.cone_y(parser.parse_args().sigma, parser.parse_args(
+            ).mu, parser.parse_args().lambda_value, parser.parse_args().caxiscontrib)
+        elif function == "cone z":
+            g = functions.cone_z(parser.parse_args().sigma, parser.parse_args(
+            ).mu, parser.parse_args().lambda_value, parser.parse_args().caxiscontrib)
         else:
             raise RuntimeError(f"No function called {function}")
         calc = Calculate(model_v, model_f, precomputed, g)
@@ -129,6 +139,6 @@ if __name__ == "__main__":
         function_actor = p.add_mesh(sphere_mesh)
         p.reset_camera()
     _ = p.add_text_slider_widget(callback=switch_function, data=[
-                                 "cube", "pyramid x", "pyramid y", "pyramid z", "cylinder x", "cylinder y", "cylinder z"], value=0)
+        "cube", "pyramid x", "pyramid y", "pyramid z", "cylinder x", "cylinder y", "cylinder z", "cone x", "cone y", "cone z"], value=0)
 
     p.show()

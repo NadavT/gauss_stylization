@@ -132,10 +132,11 @@ class Calculate:
                 p.map(calculate_edge, range(self.precomputed.ev.shape[0]))
 
             # Update u
-            # for f in range(self.F.shape[0]):
-            #     for i in range(self.precomputed.fe[f].shape[0]):
-            #         e = self.precomputed.fe[f,i]
-            #         u_shared[f,i] += e_ij_stars_shared[e].dot(nf_stars_shared[f])
+            for f in range(self.F.shape[0]):
+                for i in range(self.precomputed.fe[f].shape[0]):
+                    e = self.precomputed.fe[f, i]
+                    u_shared[f,
+                             i] += e_ij_stars_shared[e].dot(nf_stars_shared[f])
 
         E_target_edges_rhs = np.zeros([self.V.shape[0], 3])
         for e in range(self.precomputed.ev.shape[0]):
