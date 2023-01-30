@@ -4,12 +4,16 @@ import scipy as sp
 from g_function import g_Function
 from precompute import Precompute
 import igl
+from sys import platform
 
-precomputed = None
-g = None
+precomputed_global = None
+g_global = None
 
 
-def calculate_face(f: int):
+def calculate_face(f: int, precomputed: Precompute, g: g_Function):
+    if platform == "linux":
+        precomputed = precomputed_global
+        g = g_global
     ev, fe, L, lambda_value = precomputed.ev, precomputed.fe, precomputed.L, g.lambda_value
 
     shm_e_ij_stars = shared_memory.SharedMemory(name='e_ij_stars')
@@ -55,7 +59,10 @@ def calculate_face(f: int):
     shm_u.close()
 
 
-def calculate_edge(e: int):
+def calculate_edge(e: int, precomputed: Precompute, g: g_Function):
+    if platform == "linux":
+        precomputed = precomputed_global
+        g = g_global
     v, ev, fe, ef, mu = precomputed.v, precomputed.ev, precomputed.fe, precomputed.ef, g.lambda_value
 
     shm_e_ij_stars = shared_memory.SharedMemory(name='e_ij_stars')
@@ -92,12 +99,12 @@ class Calculate:
         self.precomputed = precomputed
         self.g = g
 
-    def single_iteration(self, U: np.array, iterations: int):
-        global precomputed
-        global g
+    def single_iteration(self, U: np.array, iterations: int, parallel: bool = True):
+        global precomputed_global
+        global g_global
 
-        precomputed = self.precomputed
-        g = self.g
+        precomputed_global = self.precomputed
+        g_global = self.g
 
         # Initialization
         e_ij_stars = np.array([U[self.precomputed.ev[i, 1]] - U[self.precomputed.ev[i, 0]]
@@ -126,10 +133,24 @@ class Calculate:
 
         # ADMM optimization
         for i in range(iterations):
-            with Pool() as p:
-                # func = partial(calculate_face, precomputed=precomputed, g=g)
-                p.map(calculate_face, range(self.F.shape[0]))
-                p.map(calculate_edge, range(self.precomputed.ev.shape[0]))
+            if parallel:
+                with Pool() as p:
+                    if platform == "linux":
+                        p.starmap(calculate_face, zip(range(self.F.shape[0]), [
+                                  None] * self.F.shape[0], [None] * self.F.shape[0]))
+                    else:
+                        p.starmap(calculate_face, zip(range(self.F.shape[0]), [self.precomputed] * self.F.shape[0], [self.g] * self.F.shape[0]))
+                    if platform == "linux":
+                        p.starmap(calculate_edge, zip(range(self.precomputed.ev.shape[0]), [
+                                  None] * self.precomputed.ev.shape[0], [None] * self.precomputed.ev.shape[0]))
+                    else:
+                        p.starmap(calculate_edge, zip(range(self.precomputed.ev.shape[0]), [
+                                  self.precomputed] * self.precomputed.ev.shape[0], [self.g] * self.precomputed.ev.shape[0]))
+            else:
+                for f in range(self.F.shape[0]):
+                    calculate_face(f)
+                for e in range(self.precomputed.ev.shape[0]):
+                    calculate_edge(e)
 
             # Update u
             for f in range(self.F.shape[0]):

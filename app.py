@@ -24,6 +24,7 @@ if __name__ == "__main__":
                         default=0.5, help='caxiscontrib')
     parser.add_argument('--admm_iterations', type=int,
                         default=1, help="admm iterations")
+    parser.add_argument('--parallel', type=bool, default=True, help="parallel")
 
     sphere_v, sphere_f = load(os.path.join(
         root_folder, "data", "sphere_s3.off"), normalize=False)
@@ -66,7 +67,8 @@ if __name__ == "__main__":
         for _ in range(iterations_amount):
             print("start")
             s = time()
-            calc.single_iteration(modified_v, parser.parse_args().admm_iterations)
+            calc.single_iteration(modified_v, parser.parse_args(
+            ).admm_iterations, parallel=parser.parse_args().parallel)
             print(f"end: {time() - s}")
             model_mesh = pv.PolyData(modified_v, np.concatenate(
                 ([[3]] * model_f.shape[0], model_f), axis=1))
