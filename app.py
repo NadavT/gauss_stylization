@@ -17,14 +17,18 @@ if __name__ == "__main__":
         prog='gauss_stylization')
     parser.add_argument('--model', type=str,
                         default='cat_s3.off', help='model to stylize')
-    parser.add_argument('--sigma', type=float, default=8, help='sigma')
-    parser.add_argument('--mu', type=float, default=1, help='mu')
-    parser.add_argument('--lambda_value', type=float, default=4, help='lambda')
+    parser.add_argument('--sigma', type=float, default=8,
+                        help='sigma value for function')
+    parser.add_argument('--mu', type=float, default=1,
+                        help='mu parameter')
+    parser.add_argument('--lambda_value', type=float,
+                        default=4, help='lambda parameter')
     parser.add_argument('--caxiscontrib', type=float,
-                        default=0.5, help='caxiscontrib')
+                        default=0.5, help='Axis contribution in semi-discrete normals (discrete normals contribution when using semi-discrete normals)')
     parser.add_argument('--admm_iterations', type=int,
-                        default=1, help="admm iterations")
-    parser.add_argument('--parallel', type=bool, default=True, help="parallel")
+                        default=1, help="admm iterations to do per gauss stylization update")
+    parser.add_argument('--parallel', type=bool, default=True,
+                        help="parallel whether to run calculations in parallel or not")
 
     sphere_v, sphere_f = load(os.path.join(
         root_folder, "data", "sphere_s3.off"), normalize=False)

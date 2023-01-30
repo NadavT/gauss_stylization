@@ -1,4 +1,4 @@
-name: dgp
+name: gauss_stylization
 channels:
   - defaults
 dependencies:
