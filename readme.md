@@ -61,7 +61,7 @@ options:
 
 The code was tested on a Windows and Linux environment **_BUT_** the concurrent implementation
 utilizes the `multiprocessing` **implementation** to gain performance on linux which does not
-occur on Windows. So if you are on Windows, the code will run slower and won't be able
+occur on Windows (specifically the use of the `fork` start method as described [here](https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods)). So if you are on Windows, the code will run slower and won't be able
 to utilize the system resources as much as it could on Linux. That's why we recommend that
 if you are on Windows, try to run the code on WSL (Windows Subsystem for Linux) for better
 performance, although the code should work on both environments.
