@@ -15,14 +15,8 @@ class FaceWorker(Process):
         self.complete_queue = complete_queue
 
         self.shm_e_ij_stars = shared_memory.SharedMemory(name='e_ij_stars')
-        self.e_ij_stars = np.ndarray(
-            (precomputed.ev.shape[0], 3), dtype=np.float64, buffer=self.shm_e_ij_stars.buf)
         self.shm_nf_stars = shared_memory.SharedMemory(name='nf_stars')
-        self.nf_stars = np.ndarray(
-            (precomputed.fe.shape[0], 3), dtype=np.float64, buffer=self.shm_nf_stars.buf)
         self.shm_u = shared_memory.SharedMemory(name='u')
-        self.u = np.ndarray(
-            (precomputed.fe.shape[0], 3), dtype=np.float64, buffer=self.shm_u.buf)
 
         super().__init__()
 
@@ -38,9 +32,12 @@ class FaceWorker(Process):
         precomputed = self.precomputed
         g = self.g
         ev, fe, L, lambda_value = precomputed.ev, precomputed.fe, precomputed.L, g.lambda_value
-        e_ij_stars = self.e_ij_stars
-        nf_stars = self.nf_stars
-        u = self.u
+        e_ij_stars = np.ndarray(
+            (precomputed.ev.shape[0], 3), dtype=np.float64, buffer=self.shm_e_ij_stars.buf)
+        nf_stars = np.ndarray(
+            (precomputed.fe.shape[0], 3), dtype=np.float64, buffer=self.shm_nf_stars.buf)
+        u = np.ndarray(
+            (precomputed.fe.shape[0], 3), dtype=np.float64, buffer=self.shm_u.buf)
 
         g_grad = g.gradient(nf_stars[f, :])
         Hg = g.hessian(nf_stars[f, :])
@@ -79,18 +76,9 @@ class EdgeWorker(Process):
         self.complete_queue = complete_queue
 
         self.shm_e_ij_stars = shared_memory.SharedMemory(name='e_ij_stars')
-        self.e_ij_stars = np.ndarray(
-            (precomputed.ev.shape[0], 3), dtype=np.float64, buffer=self.shm_e_ij_stars.buf)
         self.shm_nf_stars = shared_memory.SharedMemory(name='nf_stars')
-        self.nf_stars = np.ndarray(
-            (precomputed.fe.shape[0], 3), dtype=np.float64, buffer=self.shm_nf_stars.buf)
         self.shm_u = shared_memory.SharedMemory(name='u')
-        self.u = np.ndarray(
-            (precomputed.fe.shape[0], 3), dtype=np.float64, buffer=self.shm_u.buf)
         self.shm_U = shared_memory.SharedMemory(name='U')
-        self.U = np.ndarray(
-            (precomputed.v.shape[0], 3), dtype=np.float64, buffer=self.shm_U.buf)
-
         super().__init__()
 
     def run(self):
@@ -107,10 +95,14 @@ class EdgeWorker(Process):
         g = self.g
         v, ev, fe, ef, mu = precomputed.v, precomputed.ev, precomputed.fe, precomputed.ef, g.lambda_value
 
-        nf_stars = self.nf_stars
-        e_ij_stars = self.e_ij_stars
-        u = self.u
-        U = self.U
+        e_ij_stars = np.ndarray(
+            (precomputed.ev.shape[0], 3), dtype=np.float64, buffer=self.shm_e_ij_stars.buf)
+        nf_stars = np.ndarray(
+            (precomputed.fe.shape[0], 3), dtype=np.float64, buffer=self.shm_nf_stars.buf)
+        u = np.ndarray(
+            (precomputed.fe.shape[0], 3), dtype=np.float64, buffer=self.shm_u.buf)
+        U = np.ndarray(
+            (precomputed.v.shape[0], 3), dtype=np.float64, buffer=self.shm_U.buf)
 
         face_1 = ef[e, 0]
         face_2 = ef[e, 1]
@@ -183,10 +175,8 @@ class Calculate:
             self.edge_work_queue.put(None)
 
         for worker in self.face_workers:
-            worker.terminate()
             worker.join()
         for worker in self.edge_workers:
-            worker.terminate()
             worker.join()
 
         self.shm_nf_stars.close()
@@ -219,6 +209,8 @@ class Calculate:
                 self.edge_work_queue.put(i)
             for _ in range(self.precomputed.ev.shape[0]):
                 self.edge_complete_queue.get()
+
+            self.e_ij_stars_shared = np.ndarray(e_ij_stars.shape, dtype=e_ij_stars.dtype, buffer=self.shm_e_ij_stars.buf)
 
             # Update u
             for f in range(self.F.shape[0]):
