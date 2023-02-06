@@ -27,8 +27,6 @@ if __name__ == "__main__":
                         default=0.5, help='Axis contribution in semi-discrete normals (discrete normals contribution when using semi-discrete normals)')
     parser.add_argument('--admm_iterations', type=int,
                         default=1, help="admm iterations to do per gauss stylization update")
-    parser.add_argument('--parallel', type=bool, default=True,
-                        help="parallel whether to run calculations in parallel or not")
 
     sphere_v, sphere_f = load(os.path.join(
         root_folder, "data", "sphere_s3.off"), normalize=False)
@@ -72,7 +70,7 @@ if __name__ == "__main__":
             print("start")
             s = time()
             calc.single_iteration(modified_v, parser.parse_args(
-            ).admm_iterations, parallel=parser.parse_args().parallel)
+            ).admm_iterations)
             print(f"end: {time() - s}")
             model_mesh = pv.PolyData(modified_v, np.concatenate(
                 ([[3]] * model_f.shape[0], model_f), axis=1))
@@ -135,6 +133,7 @@ if __name__ == "__main__":
             ).mu, parser.parse_args().lambda_value, parser.parse_args().caxiscontrib)
         else:
             raise RuntimeError(f"No function called {function}")
+        calc.terminate()
         calc = Calculate(model_v, model_f, precomputed, g)
         deformed_sphere = np.array([v * g.value(v) for v in sphere_v[:]])
         sphere_mesh = pv.PolyData(deformed_sphere, np.concatenate(
@@ -148,3 +147,4 @@ if __name__ == "__main__":
         "cube", "pyramid x", "pyramid y", "pyramid z", "cylinder x", "cylinder y", "cylinder z", "cone x", "cone y", "cone z"], value=0)
 
     p.show()
+    calc.terminate()

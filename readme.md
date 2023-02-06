@@ -40,7 +40,7 @@ python app.py --help
 
 ```
 usage: gauss_stylization [-h] [--model MODEL] [--sigma SIGMA] [--mu MU] [--lambda_value LAMBDA_VALUE]
-                         [--caxiscontrib CAXISCONTRIB] [--admm_iterations ADMM_ITERATIONS] [--parallel PARALLEL]
+                         [--caxiscontrib CAXISCONTRIB] [--admm_iterations ADMM_ITERATIONS]
 
 options:
   -h, --help            show this help message and exit
@@ -54,14 +54,4 @@ options:
                         discrete normals)
   --admm_iterations ADMM_ITERATIONS
                         admm iterations to do per gauss stylization update
-  --parallel PARALLEL   parallel whether to run calculations in parallel or not
 ```
-
-## Notes
-
-The code was tested on a Windows and Linux environment **_BUT_** the concurrent implementation
-utilizes the `multiprocessing` **implementation** to gain performance on linux which does not
-occur on Windows (specifically the use of the `fork` start method as described [here](https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods)). So if you are on Windows, the code will run slower and won't be able
-to utilize the system resources as much as it could on Linux. That's why we recommend that
-if you are on Windows, try to run the code on WSL (Windows Subsystem for Linux) for better
-performance, although the code should work on both environments.
