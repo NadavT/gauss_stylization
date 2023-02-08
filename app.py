@@ -50,6 +50,9 @@ if __name__ == "__main__":
 
     p.subplot(0, 0)
     actor = p.add_mesh(model_mesh)
+    p.camera.up = (0, 1, 0)
+    p.camera.roll = 0
+    p.camera.position = (0, 0, 10)
     p.reset_camera()
 
     calc = Calculate(model_v, model_f, precomputed, g)
@@ -95,6 +98,10 @@ if __name__ == "__main__":
     _ = p.add_key_event("z", reset)
 
     p.subplot(0, 1)
+    p.camera.up = (0, 1, 0)
+    p.camera.roll = 0
+    p.camera.position = (0, 0, 10)
+    p.reset_camera()
     function_actor = p.add_mesh(sphere_mesh)
 
     def switch_function(function: str):
