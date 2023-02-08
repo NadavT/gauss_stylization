@@ -112,3 +112,35 @@ def cone_z(sigma, mu, lambda_value, caxiscontrib):
     R = [0.6]
     R_axis = np.array([0, 0, 1])
     return g_Function(N, R, R_axis, sigma, mu, lambda_value, caxiscontrib)
+
+def double_cone_x(sigma, mu, lambda_value, caxiscontrib):
+    N = [
+        np.array([1, 0, 0]),
+        np.array([-1, 0, 0]),
+    ]
+    N = [n / np.linalg.norm(n) for n in N]
+    R = [0.6, -0.6]
+    R_axis = np.array([1, 0, 0])
+    return g_Function(N, R, R_axis, sigma, mu, lambda_value, caxiscontrib)
+
+
+def double_cone_y(sigma, mu, lambda_value, caxiscontrib):
+    N = [
+        np.array([0,  1, 0]),
+        np.array([0, -1, 0]),
+    ]
+    N = [n / np.linalg.norm(n) for n in N]
+    R = [0.6, -0.6]
+    R_axis = np.array([0, 1, 0])
+    return g_Function(N, R, R_axis, sigma, mu, lambda_value, caxiscontrib)
+
+
+def double_cone_z(sigma, mu, lambda_value, caxiscontrib):
+    N = [
+        np.array([0, 0,  1]),
+        np.array([0, 0, -1]),
+    ]
+    N = [n / np.linalg.norm(n) for n in N]
+    R = [0.6, -0.6]
+    R_axis = np.array([0, 0, 1])
+    return g_Function(N, R, R_axis, sigma, mu, lambda_value, caxiscontrib)
