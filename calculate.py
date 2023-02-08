@@ -21,9 +21,12 @@ class FaceWorker(Process):
         super().__init__()
 
     def run(self):
-        for i in iter(self.work_queue.get, None):
-            self.calculate_face(i)
-            self.complete_queue.put(i)
+        items = self.work_queue.get()
+        while type(items) != type(None):
+            for i in items:
+                self.calculate_face(i)
+            self.complete_queue.put(0)
+            items = self.work_queue.get()
         self.shm_e_ij_stars.close()
         self.shm_nf_stars.close()
         self.shm_u.close()
@@ -82,9 +85,12 @@ class EdgeWorker(Process):
         super().__init__()
 
     def run(self):
-        for i in iter(self.work_queue.get, None):
-            self.calculate_edge(i)
-            self.complete_queue.put(i)
+        items = self.work_queue.get()
+        while type(items) != type(None):
+            for i in items:
+                self.calculate_edge(i)
+            self.complete_queue.put(0)
+            items = self.work_queue.get()
         self.shm_e_ij_stars.close()
         self.shm_nf_stars.close()
         self.shm_u.close()
@@ -201,13 +207,13 @@ class Calculate:
 
         # ADMM optimization
         for i in range(iterations):
-            for i in range(self.F.shape[0]):
-                self.face_work_queue.put(i)
-            for _ in range(self.F.shape[0]):
+            for items in np.array_split(range(self.F.shape[0]), len(self.face_workers)):
+                self.face_work_queue.put(items)
+            for _ in range(len(self.face_workers)):
                 self.face_complete_queue.get()
-            for i in range(self.precomputed.ev.shape[0]):
-                self.edge_work_queue.put(i)
-            for _ in range(self.precomputed.ev.shape[0]):
+            for items in np.array_split(range(self.precomputed.ev.shape[0]), len(self.edge_workers)):
+                self.edge_work_queue.put(items)
+            for _ in range(len(self.edge_workers)):
                 self.edge_complete_queue.get()
 
             self.e_ij_stars_shared = np.ndarray(
