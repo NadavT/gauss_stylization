@@ -42,5 +42,5 @@ class g_Function:
         N_hess = (self.sigma**2) * np.sum(self.N_w.reshape(-1, 1) * np.exp(self.sigma *
                                                                            v.dot(self.N.transpose())).reshape((-1, 1))) * self.N.transpose().dot(self.N)
         R_hess = np.sum(self.R_w * 2 * self.sigma * (2 * self.sigma * np.power((v.dot(self.R_axis) - self.R), 2) - 1) * np.exp(
-            self.sigma * (1 - np.power((v.dot(self.R_axis) - self.R), 2)))) * self.R_axis.reshape((-1, 1)) * self.R_axis
+            self.sigma * (1 - np.power((v.dot(self.R_axis) - self.R), 2)))) * self.R_axis.reshape((-1, 1)) * self.R_axis if len(self.R) > 0 else 0
         return (self.caxiscontrib * N_hess + R_hess)

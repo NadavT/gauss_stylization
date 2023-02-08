@@ -210,7 +210,8 @@ class Calculate:
             for _ in range(self.precomputed.ev.shape[0]):
                 self.edge_complete_queue.get()
 
-            self.e_ij_stars_shared = np.ndarray(e_ij_stars.shape, dtype=e_ij_stars.dtype, buffer=self.shm_e_ij_stars.buf)
+            self.e_ij_stars_shared = np.ndarray(
+                e_ij_stars.shape, dtype=e_ij_stars.dtype, buffer=self.shm_e_ij_stars.buf)
 
             # Update u
             for f in range(self.F.shape[0]):
