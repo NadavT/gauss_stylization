@@ -5,7 +5,7 @@ from g_function import g_Function
 from precompute import Precompute
 import igl
 
-from workers import FaceWorker, EdgeWorker, RotationWorker, TargetEdgeWorker
+from workers import FaceWorker, EdgeWorker, RotationWorker
 
 
 class Calculate:
@@ -19,7 +19,6 @@ class Calculate:
                                for i in range(self.precomputed.ev.shape[0])])
         nf_stars = igl.per_face_normals(V, self.F, np.array([1.0, 0.0, 0.0]))
         u = np.zeros([self.precomputed.ev.shape[0], 3])
-        E_target_edges_rhs = np.zeros([self.V.shape[0], 3])
         rotations = np.zeros([V.shape[0], 3, 3])
         try:
             self.shm_e_ij_stars = shared_memory.SharedMemory(
@@ -62,17 +61,6 @@ class Calculate:
         self.U_shared = np.ndarray(
             V.shape, dtype=V.dtype, buffer=self.shm_U.buf)
         try:
-            self.shm_E_target_edges_rhs = shared_memory.SharedMemory(
-                create=True, size=E_target_edges_rhs.nbytes, name="E_target_edges_rhs")
-        except FileExistsError:
-            self.shm_E_target_edges_rhs = shared_memory.SharedMemory(
-                name="E_target_edges_rhs")
-            self.shm_E_target_edges_rhs.unlink()
-            self.shm_E_target_edges_rhs = shared_memory.SharedMemory(
-                create=True, size=V.nbytes, name="E_target_edges_rhs")
-        self.E_target_edges_rhs_shared = np.ndarray(
-            E_target_edges_rhs.shape, dtype=E_target_edges_rhs.dtype, buffer=self.shm_U.buf)
-        try:
             self.shm_rotations = shared_memory.SharedMemory(
                 create=True, size=rotations.nbytes, name="rotations")
         except FileExistsError:
@@ -87,8 +75,6 @@ class Calculate:
         self.face_complete_queue = Queue()
         self.edge_work_queue = Queue()
         self.edge_complete_queue = Queue()
-        self.target_edges_rhs_work_queue = Queue()
-        self.target_edges_rhs_complete_queue = Queue()
         self.rotation_work_queue = Queue()
         self.rotation_complete_queue = Queue()
 
@@ -100,10 +86,6 @@ class Calculate:
             self.precomputed, self.g, self.edge_work_queue, self.edge_complete_queue) for _ in range(cpu_count())]
         for worker in self.edge_workers:
             worker.start()
-        self.target_edges_rhs_workers = [TargetEdgeWorker(
-            self.precomputed, self.g, self.target_edges_rhs_work_queue, self.target_edges_rhs_complete_queue) for _ in range(cpu_count())]
-        for worker in self.target_edges_rhs_workers:
-            worker.start()
         self.rotation_workers = [RotationWorker(
             self.precomputed, self.g, self.rotation_work_queue, self.rotation_complete_queue) for _ in range(cpu_count())]
         for worker in self.rotation_workers:
@@ -114,16 +96,12 @@ class Calculate:
             self.face_work_queue.put(None)
         for _ in self.edge_workers:
             self.edge_work_queue.put(None)
-        for _ in self.target_edges_rhs_workers:
-            self.target_edges_rhs_work_queue.put(None)
         for _ in self.rotation_workers:
             self.rotation_work_queue.put(None)
 
         for worker in self.face_workers:
             worker.join()
         for worker in self.edge_workers:
-            worker.join()
-        for worker in self.target_edges_rhs_workers:
             worker.join()
         for worker in self.rotation_workers:
             worker.join()
@@ -136,8 +114,6 @@ class Calculate:
         self.shm_u.unlink()
         self.shm_U.close()
         self.shm_U.unlink()
-        self.shm_E_target_edges_rhs.close()
-        self.shm_E_target_edges_rhs.unlink()
         self.shm_rotations.close()
         self.shm_rotations.unlink()
 
@@ -170,17 +146,16 @@ class Calculate:
             for f in range(self.F.shape[0]):
                 for i in range(self.precomputed.fe[f].shape[0]):
                     e = self.precomputed.fe[f, i]
-                    self.u_shared[f,
-                                  i] += self.e_ij_stars_shared[e].dot(self.nf_stars_shared[f])
+                    self.u_shared[f, i] += self.e_ij_stars_shared[e].dot(
+                        self.nf_stars_shared[f])
 
-        self.E_target_edges_rhs_shared = np.zeros([self.V.shape[0], 3])
-        for items in np.array_split(range(self.precomputed.ev.shape[0]), len(self.target_edges_rhs_workers)):
-            self.target_edges_rhs_work_queue.put(items)
-        for _ in range(len(self.target_edges_rhs_workers)):
-            self.target_edges_rhs_complete_queue.get()
-
-        self.E_target_edges_rhs_shared = np.ndarray(
-            self.E_target_edges_rhs_shared.shape, dtype=self.E_target_edges_rhs_shared.dtype, buffer=self.shm_E_target_edges_rhs.buf)
+        E_target_edges_rhs = np.zeros([self.V.shape[0], 3])
+        for e in range(self.precomputed.ev.shape[0]):
+            v1 = self.precomputed.ev[e, 0]
+            v2 = self.precomputed.ev[e, 1]
+            w_ij = self.precomputed.L[v1, v2]
+            E_target_edges_rhs[v1, :] -= w_ij * self.e_ij_stars_shared[e]
+            E_target_edges_rhs[v2, :] += w_ij * self.e_ij_stars_shared[e]
 
         # ARAP local step
         for items in np.array_split(range(U.shape[0]), len(self.rotation_workers)):
@@ -190,29 +165,18 @@ class Calculate:
 
         self.rotations_shared = np.ndarray(
             self.rotations_shared.shape, dtype=self.rotations_shared.dtype, buffer=self.shm_rotations.buf)
-        # for i in range(U.shape[0]):
-        #     edge_starts = U[self.precomputed.adj_f_vertices_flat[i][:, 0]]
-        #     edge_ends = U[self.precomputed.adj_f_vertices_flat[i][:, 1]]
-
-        #     vertex_rotation_from_original = (self.precomputed.adj_edges_deltas_list[i].dot(
-        #         np.diag(self.precomputed.vertices_w_list[i].flatten()))).dot(edge_ends - edge_starts)
-
-        #     u, _, vh = np.linalg.svd(vertex_rotation_from_original)
-        #     if np.linalg.det(u.dot(vh)) < 0:
-        #         vh[2, :] *= -1
-        #     self.rotations_shared[i] = u.dot(vh).transpose()
 
         # ARAP global step
         rotations_as_column = np.array([rot[j, i] for i in range(
             3) for j in range(3) for rot in self.rotations_shared]).reshape(-1, 1)
         arap_B_prod = self.precomputed.arap_rhs.dot(rotations_as_column)
+        known = np.array([0], dtype=int)
+        known_positions = igl.snap_points(
+            np.array([U[self.F[0, 0]]]), self.V)[2]
         for dim in range(self.V.shape[1]):
             B = (arap_B_prod[dim*self.V.shape[0]:(dim+1)*self.V.shape[0]] + self.g.lambda_value *
-                 self.E_target_edges_rhs_shared[:, dim].reshape(-1, 1)) / (1 + self.g.lambda_value)
-
-            known = np.array([0], dtype=int)
-            known_positions = np.array([self.V[self.F[0, 0], dim]])
+                 E_target_edges_rhs[:, dim].reshape(-1, 1)) / (1 + self.g.lambda_value)
 
             new_U = igl.min_quad_with_fixed(
-                self.precomputed.L, B, known, known_positions, sp.sparse.csr_matrix((0, 0)), np.array([]), False)
+                self.precomputed.L, B, known, np.array([known_positions[dim]]), sp.sparse.csr_matrix((0, 0)), np.array([]), False)
             U[:, dim] = new_U[1]
