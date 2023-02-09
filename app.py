@@ -147,6 +147,9 @@ if __name__ == "__main__":
         elif function == "double cone z":
             g = functions.double_cone_z(parser.parse_args().sigma, parser.parse_args(
             ).mu, parser.parse_args().lambda_value, parser.parse_args().caxiscontrib)
+        elif function == "multi cylinder":
+            g = functions.multi_cylinder(parser.parse_args().sigma, parser.parse_args(
+            ).mu, parser.parse_args().lambda_value, parser.parse_args().caxiscontrib)
         else:
             raise RuntimeError(f"No function called {function}")
         calc.terminate()
@@ -160,7 +163,7 @@ if __name__ == "__main__":
         function_actor = p.add_mesh(sphere_mesh)
         p.reset_camera()
     _ = p.add_text_slider_widget(callback=switch_function, data=[
-        "cube", "pyramid x", "pyramid y", "pyramid z", "cylinder x", "cylinder y", "cylinder z", "cone x", "cone y", "cone z", "double cone x", "double cone y", "double cone z"], value=0)
+        "cube", "pyramid x", "pyramid y", "pyramid z", "cylinder x", "cylinder y", "cylinder z", "cone x", "cone y", "cone z", "double cone x", "double cone y", "double cone z", "multi cylinder"], value=0)
 
     p.show()
     calc.terminate()
