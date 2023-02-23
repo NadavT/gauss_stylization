@@ -1,5 +1,6 @@
 import igl
 import numpy as np
+from time import time
 
 
 class Precompute:
@@ -23,8 +24,16 @@ class Precompute:
         self.adj_f_vertices_flat = [
             adj_f_vertices[i].reshape(-1, 2) for i in range(v.shape[0])]
 
-        self.vertices_w_list = [np.array(
-            [[self.L[i, j] for i, j in e] for e in f]).reshape(-1, 1) for f in adj_f_vertices]
+        indexes_x = [f[:, :, 0].reshape(1, -1) for f in adj_f_vertices]
+        indexes_y = [f[:, :, 1].reshape(1, -1) for f in adj_f_vertices]
+        all_values = self.L[(np.concatenate(indexes_x, axis=1),
+                             np.concatenate(indexes_y, axis=1))].todense().transpose()
+        self.vertices_w_list = []
+        index = 0
+        for f in adj_f_vertices:
+            self.vertices_w_list.append(
+                np.array(all_values[index:index+(f.shape[0] * f.shape[1])].reshape(-1, 1)))
+            index += f.shape[0] * f.shape[1]
 
         self.adj_edges_deltas_list = [(v[self.adj_f_vertices_flat[i][:, 1]] -
                                        v[self.adj_f_vertices_flat[i][:, 0]]).reshape(-1, 3).transpose() for i in range(v.shape[0])]

@@ -27,13 +27,14 @@ if __name__ == "__main__":
                         default=0.5, help='Axis contribution in semi-discrete normals (discrete normals contribution when using semi-discrete normals)')
     parser.add_argument('--admm_iterations', type=int,
                         default=1, help="admm iterations to do per gauss stylization update")
-    parser.add_argument('--parallel', type=bool, default=True,
-                        help="parallel whether to run calculations in parallel or not")
 
     sphere_v, sphere_f = load(os.path.join(
         root_folder, "data", "sphere_s3.off"), normalize=False)
-    model_v, model_f = load(os.path.join(
-        root_folder, "data", parser.parse_args().model))
+    if os.path.exists(parser.parse_args().model):
+        model_v, model_f = load(parser.parse_args().model)
+    else:
+        model_v, model_f = load(os.path.join(
+            root_folder, "data", parser.parse_args().model))
 
     precomputed = Precompute(model_v, model_f)
 
@@ -52,6 +53,9 @@ if __name__ == "__main__":
 
     p.subplot(0, 0)
     actor = p.add_mesh(model_mesh)
+    p.camera.up = (0, 1, 0)
+    p.camera.roll = 0
+    p.camera.position = (0, 0, 10)
     p.reset_camera()
 
     calc = Calculate(model_v, model_f, precomputed, g)
@@ -72,7 +76,7 @@ if __name__ == "__main__":
             print("start")
             s = time()
             calc.single_iteration(modified_v, parser.parse_args(
-            ).admm_iterations, parallel=parser.parse_args().parallel)
+            ).admm_iterations)
             print(f"end: {time() - s}")
             model_mesh = pv.PolyData(modified_v, np.concatenate(
                 ([[3]] * model_f.shape[0], model_f), axis=1))
@@ -97,6 +101,10 @@ if __name__ == "__main__":
     _ = p.add_key_event("z", reset)
 
     p.subplot(0, 1)
+    p.camera.up = (0, 1, 0)
+    p.camera.roll = 0
+    p.camera.position = (0, 0, 10)
+    p.reset_camera()
     function_actor = p.add_mesh(sphere_mesh)
 
     def switch_function(function: str):
@@ -133,8 +141,21 @@ if __name__ == "__main__":
         elif function == "cone z":
             g = functions.cone_z(parser.parse_args().sigma, parser.parse_args(
             ).mu, parser.parse_args().lambda_value, parser.parse_args().caxiscontrib)
+        elif function == "double cone x":
+            g = functions.double_cone_x(parser.parse_args().sigma, parser.parse_args(
+            ).mu, parser.parse_args().lambda_value, parser.parse_args().caxiscontrib)
+        elif function == "double cone y":
+            g = functions.double_cone_y(parser.parse_args().sigma, parser.parse_args(
+            ).mu, parser.parse_args().lambda_value, parser.parse_args().caxiscontrib)
+        elif function == "double cone z":
+            g = functions.double_cone_z(parser.parse_args().sigma, parser.parse_args(
+            ).mu, parser.parse_args().lambda_value, parser.parse_args().caxiscontrib)
+        elif function == "multi cylinder":
+            g = functions.multi_cylinder(parser.parse_args().sigma, parser.parse_args(
+            ).mu, parser.parse_args().lambda_value, parser.parse_args().caxiscontrib)
         else:
             raise RuntimeError(f"No function called {function}")
+        calc.terminate()
         calc = Calculate(model_v, model_f, precomputed, g)
         deformed_sphere = np.array([v * g.value(v) for v in sphere_v[:]])
         sphere_mesh = pv.PolyData(deformed_sphere, np.concatenate(
@@ -145,6 +166,7 @@ if __name__ == "__main__":
         function_actor = p.add_mesh(sphere_mesh)
         p.reset_camera()
     _ = p.add_text_slider_widget(callback=switch_function, data=[
-        "cube", "pyramid x", "pyramid y", "pyramid z", "cylinder x", "cylinder y", "cylinder z", "cone x", "cone y", "cone z"], value=0)
+        "cube", "pyramid x", "pyramid y", "pyramid z", "cylinder x", "cylinder y", "cylinder z", "cone x", "cone y", "cone z", "double cone x", "double cone y", "double cone z", "multi cylinder"], value=0)
 
     p.show()
+    calc.terminate()
