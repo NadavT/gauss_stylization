@@ -30,8 +30,11 @@ if __name__ == "__main__":
 
     sphere_v, sphere_f = load(os.path.join(
         root_folder, "data", "sphere_s3.off"), normalize=False)
-    model_v, model_f = load(os.path.join(
-        root_folder, "data", parser.parse_args().model))
+    if os.path.exists(parser.parse_args().model):
+        model_v, model_f = load(parser.parse_args().model)
+    else:
+        model_v, model_f = load(os.path.join(
+            root_folder, "data", parser.parse_args().model))
 
     precomputed = Precompute(model_v, model_f)
 
