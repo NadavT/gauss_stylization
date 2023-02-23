@@ -32,20 +32,28 @@ class g_Function:
     def value(self, v: np.array):
         N_value = np.sum(self.N_w * np.exp(self.sigma *
                          v.dot(self.N))) if len(self.N) > 0 else 0
-        R_value = np.sum(self.R_w * np.exp(self.sigma * (1 -
+        R_value = np.max(self.R_w * np.exp(self.sigma * (1 -
                          (v.dot(self.R_axis) - self.R)**2))) if len(self.R) > 0 else 0
         return (self.caxiscontrib * N_value + R_value)
 
     def gradient(self, v: np.array):
         N_grad = np.sum(self.N_w.reshape(-1, 1) * self.N.transpose() *
                         np.exp(self.sigma * v.dot(self.N)).reshape((-1, 1)), axis=0) if len(self.N) > 0 else 0
-        R_grad = np.sum(self.R_w * self.R_axis * -2 * (v.dot(self.R_axis) - self.R)
-                        * np.exp(self.sigma * (1 - np.power(v.dot(self.R_axis) - self.R, 2))), axis=1) if len(self.R) > 0 else 0
+        R_real_axis_index = np.argmax(self.R_w * np.exp(self.sigma * (1 -
+                                                                      (v.dot(self.R_axis) - self.R)**2))) if len(self.R) > 0 else 0
+        R_real_axis = self.R_axis[:, R_real_axis_index] if len(
+            self.R) > 0 else 0
+        R_grad = self.R_w[R_real_axis_index] * R_real_axis * -2 * (v.dot(R_real_axis) - self.R[R_real_axis_index]) * np.exp(
+            self.sigma * (1 - np.power(v.dot(R_real_axis) - self.R[R_real_axis_index], 2))) if len(self.R) > 0 else 0
         return self.sigma * (self.caxiscontrib * N_grad + R_grad)
 
     def hessian(self, v: np.array):
         modified_N = np.sqrt(
             self.N_w * np.exp(self.sigma * v.dot(self.N))) * self.N if len(self.N) > 0 else np.array([0])
-        modified_R = np.sqrt(self.R_w *
-                             np.exp(self.sigma * (1 - (v.dot(self.R_axis) - self.R)**2))) * self.R_axis if len(self.R) > 0 else np.array([0])
+        R_real_axis_index = np.argmax(self.R_w * np.exp(self.sigma * (1 -
+                                                                      (v.dot(self.R_axis) - self.R)**2))) if len(self.R) > 0 else 0
+        R_real_axis = self.R_axis[:, R_real_axis_index] if len(
+            self.R) > 0 else 0
+        modified_R = (np.sqrt(self.R_w[R_real_axis_index] *
+                              np.exp(self.sigma * (1 - (v.dot(R_real_axis) - self.R[R_real_axis_index])**2))) * R_real_axis).reshape(-1, 1) if len(self.R) > 0 else np.array([0])
         return (self.sigma**2) * (self.caxiscontrib * modified_N.dot(modified_N.transpose()) + modified_R.dot(modified_R.transpose()))
