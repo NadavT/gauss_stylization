@@ -26,19 +26,19 @@ class RotationWorker(Process):
         self.shm_U.close()
         self.shm_rotations.close()
 
-    def calculate_rotation(self, r: int):
+    def calculate_rotation(self, v: int):
         U = np.ndarray(
             (self.precomputed.v.shape[0], 3), dtype=np.float64, buffer=self.shm_U.buf)
         rotations = np.ndarray(
             (self.precomputed.v.shape[0], 3, 3), dtype=np.float64, buffer=self.shm_rotations.buf)
 
-        edge_starts = U[self.precomputed.adj_f_vertices_flat[r][:, 0]]
-        edge_ends = U[self.precomputed.adj_f_vertices_flat[r][:, 1]]
+        edge_starts = U[self.precomputed.adj_f_vertices_flat[v][:, 0]]
+        edge_ends = U[self.precomputed.adj_f_vertices_flat[v][:, 1]]
 
-        vertex_rotation_from_original = (self.precomputed.adj_edges_deltas_list[r].dot(
-            np.diag(self.precomputed.vertices_w_list[r].flatten()))).dot(edge_ends - edge_starts)
+        vertex_rotation_from_original = (self.precomputed.adj_edges_deltas_list[v].dot(
+            np.diag(self.precomputed.vertices_w_list[v].flatten()))).dot(edge_ends - edge_starts)
 
         u, _, vh = np.linalg.svd(vertex_rotation_from_original)
         if np.linalg.det(u.dot(vh)) < 0:
             vh[2, :] *= -1
-        rotations[r] = u.dot(vh).transpose()
+        rotations[v] = u.dot(vh).transpose()
