@@ -4,6 +4,7 @@ import scipy as sp
 from g_function import g_Function
 from precompute import Precompute
 import igl
+from time import time
 
 from workers import FaceWorker, EdgeWorker, RotationWorker
 
@@ -130,14 +131,19 @@ class Calculate:
 
         # ADMM optimization
         for i in range(iterations):
+            # Update nf_stars
+            start = time()
             for items in np.array_split(range(self.F.shape[0]), len(self.face_workers)):
                 self.face_work_queue.put(items)
             for _ in range(len(self.face_workers)):
                 self.face_complete_queue.get()
+            print("Face time: ", time() - start)
+            start = time()
             for items in np.array_split(range(self.precomputed.ev.shape[0]), len(self.edge_workers)):
                 self.edge_work_queue.put(items)
             for _ in range(len(self.edge_workers)):
                 self.edge_complete_queue.get()
+            print("Edge time: ", time() - start)
 
             self.e_ij_stars_shared = np.ndarray(
                 e_ij_stars.shape, dtype=e_ij_stars.dtype, buffer=self.shm_e_ij_stars.buf)
@@ -149,6 +155,7 @@ class Calculate:
                     self.u_shared[f, i] += self.e_ij_stars_shared[e].dot(
                         self.nf_stars_shared[f])
 
+        start = time()
         E_target_edges_rhs = np.zeros([self.V.shape[0], 3])
         for e in range(self.precomputed.ev.shape[0]):
             v1 = self.precomputed.ev[e, 0]
@@ -156,17 +163,21 @@ class Calculate:
             w_ij = self.precomputed.L[v1, v2]
             E_target_edges_rhs[v1, :] -= w_ij * self.e_ij_stars_shared[e]
             E_target_edges_rhs[v2, :] += w_ij * self.e_ij_stars_shared[e]
+        print("E_target_edges_rhs time: ", time() - start)
 
         # ARAP local step
+        start = time()
         for items in np.array_split(range(U.shape[0]), len(self.rotation_workers)):
             self.rotation_work_queue.put(items)
         for _ in range(len(self.rotation_workers)):
             self.rotation_complete_queue.get()
+        print("Rotation time: ", time() - start)
 
         self.rotations_shared = np.ndarray(
             self.rotations_shared.shape, dtype=self.rotations_shared.dtype, buffer=self.shm_rotations.buf)
 
         # ARAP global step
+        start = time()
         rotations_as_column = np.array([rot[j, i] for i in range(
             3) for j in range(3) for rot in self.rotations_shared]).reshape(-1, 1)
         arap_B_prod = self.precomputed.arap_rhs.dot(rotations_as_column)
@@ -180,3 +191,4 @@ class Calculate:
             new_U = igl.min_quad_with_fixed(
                 self.precomputed.L, B, known, np.array([known_positions[dim]]), sp.sparse.csr_matrix((0, 0)), np.array([]), False)
             U[:, dim] = new_U[1]
+        print("ARAP time: ", time() - start)
