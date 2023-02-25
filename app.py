@@ -4,12 +4,12 @@ import numpy as np
 import os
 from load_model import load
 from precompute import Precompute
-from g_function import g_Function
 from calculate import Calculate
 import copy
 from time import time
 import argparse
-import functions
+from functions import create_function
+import json
 
 if __name__ == "__main__":
     root_folder = os.getcwd()
@@ -36,12 +36,17 @@ if __name__ == "__main__":
         model_v, model_f = load(os.path.join(
             root_folder, "data", parser.parse_args().model))
 
+    with open("functions.json", "r") as f:
+        functions_descriptions = {
+            function["name"]: function for function in json.loads(f.read())}
+        assert "cube" in functions_descriptions
+
     precomputed = Precompute(model_v, model_f)
 
     p = pv.Plotter(shape=(1, 2))
 
     modified_v = copy.deepcopy(model_v)
-    g = functions.cube(parser.parse_args().sigma, parser.parse_args(
+    g = create_function(functions_descriptions["cube"], parser.parse_args().sigma, parser.parse_args(
     ).mu, parser.parse_args().lambda_value, parser.parse_args().caxiscontrib)
     deformed_sphere = np.array([v * g.value(v) for v in sphere_v[:]])
 
@@ -107,54 +112,12 @@ if __name__ == "__main__":
     p.reset_camera()
     function_actor = p.add_mesh(sphere_mesh)
 
-    def switch_function(function: str):
+    def switch_function(function_name: str):
         global sphere_mesh
         global calc
         global function_actor
-        if function == "cube":
-            g = functions.cube(parser.parse_args().sigma, parser.parse_args(
-            ).mu, parser.parse_args().lambda_value, parser.parse_args().caxiscontrib)
-        elif function == "pyramid x":
-            g = functions.pyramid_x(parser.parse_args().sigma, parser.parse_args(
-            ).mu, parser.parse_args().lambda_value, parser.parse_args().caxiscontrib)
-        elif function == "pyramid y":
-            g = functions.pyramid_y(parser.parse_args().sigma, parser.parse_args(
-            ).mu, parser.parse_args().lambda_value, parser.parse_args().caxiscontrib)
-        elif function == "pyramid z":
-            g = functions.pyramid_z(parser.parse_args().sigma, parser.parse_args(
-            ).mu, parser.parse_args().lambda_value, parser.parse_args().caxiscontrib)
-        elif function == "cylinder x":
-            g = functions.cylinder_x(parser.parse_args().sigma, parser.parse_args(
-            ).mu, parser.parse_args().lambda_value, parser.parse_args().caxiscontrib)
-        elif function == "cylinder y":
-            g = functions.cylinder_y(parser.parse_args().sigma, parser.parse_args(
-            ).mu, parser.parse_args().lambda_value, parser.parse_args().caxiscontrib)
-        elif function == "cylinder z":
-            g = functions.cylinder_z(parser.parse_args().sigma, parser.parse_args(
-            ).mu, parser.parse_args().lambda_value, parser.parse_args().caxiscontrib)
-        elif function == "cone x":
-            g = functions.cone_x(parser.parse_args().sigma, parser.parse_args(
-            ).mu, parser.parse_args().lambda_value, parser.parse_args().caxiscontrib)
-        elif function == "cone y":
-            g = functions.cone_y(parser.parse_args().sigma, parser.parse_args(
-            ).mu, parser.parse_args().lambda_value, parser.parse_args().caxiscontrib)
-        elif function == "cone z":
-            g = functions.cone_z(parser.parse_args().sigma, parser.parse_args(
-            ).mu, parser.parse_args().lambda_value, parser.parse_args().caxiscontrib)
-        elif function == "double cone x":
-            g = functions.double_cone_x(parser.parse_args().sigma, parser.parse_args(
-            ).mu, parser.parse_args().lambda_value, parser.parse_args().caxiscontrib)
-        elif function == "double cone y":
-            g = functions.double_cone_y(parser.parse_args().sigma, parser.parse_args(
-            ).mu, parser.parse_args().lambda_value, parser.parse_args().caxiscontrib)
-        elif function == "double cone z":
-            g = functions.double_cone_z(parser.parse_args().sigma, parser.parse_args(
-            ).mu, parser.parse_args().lambda_value, parser.parse_args().caxiscontrib)
-        elif function == "multi cylinder":
-            g = functions.multi_cylinder(parser.parse_args().sigma, parser.parse_args(
-            ).mu, parser.parse_args().lambda_value, parser.parse_args().caxiscontrib)
-        else:
-            raise RuntimeError(f"No function called {function}")
+        g = create_function(functions_descriptions[function_name], parser.parse_args().sigma, parser.parse_args(
+        ).mu, parser.parse_args().lambda_value, parser.parse_args().caxiscontrib)
         calc.terminate()
         calc = Calculate(model_v, model_f, precomputed, g)
         deformed_sphere = np.array([v * g.value(v) for v in sphere_v[:]])
@@ -165,8 +128,8 @@ if __name__ == "__main__":
         p.remove_actor(function_actor)
         function_actor = p.add_mesh(sphere_mesh)
         p.reset_camera()
-    _ = p.add_text_slider_widget(callback=switch_function, data=[
-        "cube", "pyramid x", "pyramid y", "pyramid z", "cylinder x", "cylinder y", "cylinder z", "cone x", "cone y", "cone z", "double cone x", "double cone y", "double cone z", "multi cylinder"], value=0)
+    _ = p.add_text_slider_widget(
+        callback=switch_function, data=list(functions_descriptions.keys()), value=0)
 
     p.show()
     calc.terminate()

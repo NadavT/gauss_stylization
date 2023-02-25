@@ -1,0 +1,191 @@
+[
+  {
+    "name": "cube",
+    "discrete_normals": [
+      [1, 0, 0],
+      [-1, 0, 0],
+      [0, 1, 0],
+      [0, -1, 0],
+      [0, 0, 1],
+      [0, 0, -1]
+    ],
+    "semi_discrete_normals": [],
+    "semi_discrete_normals_axes": []
+  },
+  {
+    "name": "pyramid x",
+    "discrete_normals": [
+      [-1, 0, 0],
+      [2, 1, 1],
+      [2, 1, -1],
+      [2, -1, 1],
+      [2, -1, -1]
+    ],
+    "semi_discrete_normals": [],
+    "semi_discrete_normals_axes": []
+  },
+  {
+    "name": "pyramid y",
+    "discrete_normals": [
+      [0, -1, 0],
+      [1, 2, 1],
+      [1, 2, -1],
+      [-1, 2, 1],
+      [-1, 2, -1]
+    ],
+    "semi_discrete_normals": [],
+    "semi_discrete_normals_axes": []
+  },
+  {
+    "name": "pyramid z",
+    "discrete_normals": [
+      [0, 0, -1],
+      [1, 1, 2],
+      [1, -1, 2],
+      [-1, 1, 2],
+      [-1, -1, 2]
+    ],
+    "semi_discrete_normals": [],
+    "semi_discrete_normals_axes": []
+  },
+  {
+    "name": "cylinder x",
+    "discrete_normals": [
+      [1, 0, 0],
+      [-1, 0, 0]
+    ],
+    "semi_discrete_normals": [0],
+    "semi_discrete_normals_axes": [[1, 0, 0]]
+  },
+  {
+    "name": "cylinder y",
+    "discrete_normals": [
+      [0, 1, 0],
+      [0, -1, 0]
+    ],
+    "semi_discrete_normals": [0],
+    "semi_discrete_normals_axes": [[0, 1, 0]]
+  },
+  {
+    "name": "cylinder z",
+    "discrete_normals": [
+      [0, 0, 1],
+      [0, 0, -1]
+    ],
+    "semi_discrete_normals": [0],
+    "semi_discrete_normals_axes": [[0, 0, 1]]
+  },
+  {
+    "name": "cone x",
+    "discrete_normals": [
+      [1, 0, 0],
+      [-1, 0, 0]
+    ],
+    "semi_discrete_normals": [0.6],
+    "semi_discrete_normals_axes": [[1, 0, 0]]
+  },
+  {
+    "name": "cone y",
+    "discrete_normals": [
+      [0, 1, 0],
+      [0, -1, 0]
+    ],
+    "semi_discrete_normals": [0.6],
+    "semi_discrete_normals_axes": [[0, 1, 0]]
+  },
+  {
+    "name": "cone z",
+    "discrete_normals": [
+      [0, 0, 1],
+      [0, 0, -1]
+    ],
+    "semi_discrete_normals": [0.6],
+    "semi_discrete_normals_axes": [[0, 0, 1]]
+  },
+  {
+    "name": "cone x",
+    "discrete_normals": [
+      [1, 0, 0],
+      [-1, 0, 0]
+    ],
+    "semi_discrete_normals": [0.6],
+    "semi_discrete_normals_axes": [[1, 0, 0]]
+  },
+  {
+    "name": "cone y",
+    "discrete_normals": [
+      [0, 1, 0],
+      [0, -1, 0]
+    ],
+    "semi_discrete_normals": [0.6],
+    "semi_discrete_normals_axes": [[0, 1, 0]]
+  },
+  {
+    "name": "cone z",
+    "discrete_normals": [
+      [0, 0, 1],
+      [0, 0, -1]
+    ],
+    "semi_discrete_normals": [0.6],
+    "semi_discrete_normals_axes": [[0, 0, 1]]
+  },
+  {
+    "name": "double cone x",
+    "discrete_normals": [
+      [1, 0, 0],
+      [-1, 0, 0]
+    ],
+    "semi_discrete_normals": [0.6, -0.6],
+    "semi_discrete_normals_axes": [
+      [1, 0, 0],
+      [1, 0, 0]
+    ]
+  },
+  {
+    "name": "double cone y",
+    "discrete_normals": [
+      [0, 1, 0],
+      [0, -1, 0]
+    ],
+    "semi_discrete_normals": [0.6, -0.6],
+    "semi_discrete_normals_axes": [
+      [0, 1, 0],
+      [0, 1, 0]
+    ]
+  },
+  {
+    "name": "double cone z",
+    "discrete_normals": [
+      [0, 0, 1],
+      [0, 0, -1]
+    ],
+    "semi_discrete_normals": [0.6, -0.6],
+    "semi_discrete_normals_axes": [
+      [0, 0, 1],
+      [0, 0, 1]
+    ]
+  },
+  {
+    "name": "multi cylinder",
+    "discrete_normals": [],
+    "semi_discrete_normals": [0, 0, 0],
+    "semi_discrete_normals_axes": [
+      [1, 0, 0],
+      [0, 1, 0],
+      [0, 0, 1]
+    ]
+  },
+  {
+    "name": "multi cone",
+    "discrete_normals": [],
+    "semi_discrete_normals": [0.9, 0.9, 0.9, 0.9, 0.9, 0.9],
+    "semi_discrete_normals_axes": [
+      [1, 0, 0],
+      [-1, 0, 0],
+      [0, 1, 0],
+      [0, -1, 0],
+      [0, 0, 1],
+      [0, 0, -1]
+    ]
+  }
+]
