@@ -2,7 +2,7 @@
 
 This is a python implementation for the paper "Gauss Stylization: Interactive Artistic Mesh Modeling
 based on Preferred Surface Normals" by M. Kohlbrenner, U. Finnendahl, T. Djuren, M. Alexa
-See the [project page](http://www.martin-kohlbrenner.de/gauss_stylizationhttps://cybertron.cg.tu-berlin.de/projects/gaussStylization/) for more information.
+See the [project page](https://cybertron.cg.tu-berlin.de/projects/gaussStylization/) for more information.
 
 ## Running the code
 
@@ -15,6 +15,8 @@ You can install conda from [here](https://docs.conda.io/projects/conda/en/stable
 To install the required packages, run
 
 ```sh
+conda config --add channels conda-forge                                                                                                                                                                                 ─╯
+conda config --set channel_priority strict
 conda env create -f environment.yml
 ```
 
