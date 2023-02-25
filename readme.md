@@ -39,21 +39,19 @@ python app.py --help
 ```
 
 ```
-usage: gauss_stylization [-h] [--model MODEL] [--sigma SIGMA] [--mu MU] [--lambda_value LAMBDA_VALUE]
-                         [--caxiscontrib CAXISCONTRIB] [--admm_iterations ADMM_ITERATIONS]
+usage: gauss_stylization [-h] [--model MODEL] [--sigma SIGMA] [--mu MU] [--lambda_value LAMBDA_VALUE] [--caxiscontrib CAXISCONTRIB] [--admm_iterations ADMM_ITERATIONS]
 
 options:
   -h, --help            show this help message and exit
-  --model MODEL         model to stylize
-  --sigma SIGMA         sigma value for function
-  --mu MU               mu parameter
+  --model MODEL         model to stylize (default: cat_s3.off)
+  --sigma SIGMA         sigma value for function (default: 8)
+  --mu MU               mu parameter (default: 1)
   --lambda_value LAMBDA_VALUE
-                        lambda parameter
+                        lambda parameter (default: 4)
   --caxiscontrib CAXISCONTRIB
-                        Axis contribution in semi-discrete normals (discrete normals contribution when using semi-
-                        discrete normals)
+                        Axis contribution in semi-discrete normals (discrete normals contribution when using semi-discrete normals) (default: 0.5)
   --admm_iterations ADMM_ITERATIONS
-                        admm iterations to do per gauss stylization update
+                        admm iterations to do per gauss stylization update (default: 1)
 ```
 
 ## User interface
@@ -92,3 +90,27 @@ You can control the stylization using the following controls:
 ### Notes
 
 Timing of the stylization will be printed to the terminal.
+
+## Adding functions
+
+You can add functions to the stylization by adding them to the "functions.json" file.\
+The file contains a list of functions, each function has the following fields:
+
+- name: The name of the function.
+- discrete normals: A list of discrete normals to use for the function.
+- semi-discrete normals: A list of semi-discrete normals to use for the function (the opening angle).
+- semi-discrete normals axes: A list of axes to use for the semi-discrete normals.
+
+For example:
+
+```json
+{
+  "name": "cylinder x",
+  "discrete_normals": [
+    [1, 0, 0],
+    [-1, 0, 0]
+  ],
+  "semi_discrete_normals": [0],
+  "semi_discrete_normals_axes": [[1, 0, 0]]
+}
+```

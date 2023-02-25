@@ -14,7 +14,7 @@ import json
 if __name__ == "__main__":
     root_folder = os.getcwd()
     parser = argparse.ArgumentParser(
-        prog='gauss_stylization')
+        prog='gauss_stylization', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--model', type=str,
                         default='cat_s3.off', help='model to stylize')
     parser.add_argument('--sigma', type=float, default=8,

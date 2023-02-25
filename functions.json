@@ -187,5 +187,14 @@
       [0, 0, 1],
       [0, 0, -1]
     ]
+  },
+  {
+    "name": "cylinder xy",
+    "discrete_normals": [],
+    "semi_discrete_normals": [0, 0],
+    "semi_discrete_normals_axes": [
+      [1, 0, 0],
+      [0, 1, 0]
+    ]
   }
 ]
