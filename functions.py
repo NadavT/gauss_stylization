@@ -3,6 +3,9 @@ import numpy as np
 
 
 def create_function(function_description: dict, sigma, mu, lambda_value, caxiscontrib):
+    """
+    Creates g_Function object from function description.
+    """
     N = function_description["discrete_normals"]
     N = [n / np.linalg.norm(n) for n in N]
     R = function_description["semi_discrete_normals"]

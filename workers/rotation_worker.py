@@ -5,7 +5,14 @@ from precompute import Precompute
 
 
 class RotationWorker(Process):
+    """
+    The rotation worker calculates the rotation matrix for each vertex.
+    """
+
     def __init__(self, precomputed: Precompute, g: g_Function, work_queue: Queue, complete_queue: Queue):
+        """
+        Initialize the rotation worker.
+        """
         self.precomputed = precomputed
         self.g = g
         self.work_queue = work_queue
@@ -17,6 +24,9 @@ class RotationWorker(Process):
         super().__init__()
 
     def run(self):
+        """
+        Run the rotation worker (waiting on queue).
+        """
         items = self.work_queue.get()
         while type(items) != type(None):
             for i in items:
@@ -27,6 +37,9 @@ class RotationWorker(Process):
         self.shm_rotations.close()
 
     def calculate_rotation(self, v: int):
+        """
+        Calculate the rotation matrix for a single vertex.
+        """
         U = np.ndarray(
             (self.precomputed.v.shape[0], 3), dtype=np.float64, buffer=self.shm_U.buf)
         rotations = np.ndarray(

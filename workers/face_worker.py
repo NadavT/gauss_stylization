@@ -6,7 +6,14 @@ from precompute import Precompute
 
 
 class FaceWorker(Process):
+    """
+    The face worker calculates n_f*.
+    """
+
     def __init__(self, precomputed: Precompute, g: g_Function, work_queue: Queue, complete_queue: Queue):
+        """
+        Initialize the face worker.
+        """
         self.precomputed = precomputed
         self.g = g
         self.work_queue = work_queue
@@ -19,6 +26,9 @@ class FaceWorker(Process):
         super().__init__()
 
     def run(self):
+        """
+        Run the face worker (waiting on queue).
+        """
         items = self.work_queue.get()
         while type(items) != type(None):
             for i in items:
@@ -30,6 +40,9 @@ class FaceWorker(Process):
         self.shm_u.close()
 
     def calculate_face(self, f: int):
+        """
+        Calculate n_f* for a single face.
+        """
         precomputed = self.precomputed
         g = self.g
         ev, fe, L, lambda_value = precomputed.ev, precomputed.fe, precomputed.L, g.lambda_value

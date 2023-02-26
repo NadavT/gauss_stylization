@@ -6,7 +6,14 @@ from precompute import Precompute
 
 
 class EdgeWorker(Process):
+    """
+    The edge worker calculates e*.
+    """
+
     def __init__(self, precomputed: Precompute, g: g_Function, work_queue: Queue, complete_queue: Queue):
+        """
+        Initialize the edge worker.
+        """
         self.precomputed = precomputed
         self.g = g
         self.work_queue = work_queue
@@ -19,6 +26,9 @@ class EdgeWorker(Process):
         super().__init__()
 
     def run(self):
+        """
+        Run the edge worker (waiting on queue).
+        """
         items = self.work_queue.get()
         while type(items) != type(None):
             for i in items:
@@ -31,6 +41,9 @@ class EdgeWorker(Process):
         self.shm_U.close()
 
     def calculate_edge(self, e: int):
+        """
+        Calculate e* for a single edge.
+        """
         precomputed = self.precomputed
         g = self.g
         v, ev, fe, ef, mu = precomputed.v, precomputed.ev, precomputed.fe, precomputed.ef, g.lambda_value

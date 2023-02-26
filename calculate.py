@@ -10,12 +10,20 @@ from workers import FaceWorker, EdgeWorker, RotationWorker
 
 
 class Calculate:
+    """
+    Calculates the deformation of a mesh.
+    """
+
     def __init__(self, V: np.array, F: np.array, precomputed: Precompute, g: g_Function):
+        """
+        Initializes the calculation with a given mesh and precomputed data.
+        """
         self.V = V
         self.F = F
         self.precomputed = precomputed
         self.g = g
 
+        # Create shared memory for calculations.
         e_ij_stars = np.array([V[self.precomputed.ev[i, 1]] - V[self.precomputed.ev[i, 0]]
                                for i in range(self.precomputed.ev.shape[0])])
         nf_stars = igl.per_face_normals(V, self.F, np.array([1.0, 0.0, 0.0]))
@@ -72,6 +80,7 @@ class Calculate:
         self.rotations_shared = np.ndarray(
             rotations.shape, dtype=rotations.dtype, buffer=self.shm_rotations.buf)
 
+        # Create queues for workers.
         self.face_work_queue = Queue()
         self.face_complete_queue = Queue()
         self.edge_work_queue = Queue()
@@ -79,6 +88,7 @@ class Calculate:
         self.rotation_work_queue = Queue()
         self.rotation_complete_queue = Queue()
 
+        # Start workers.
         self.face_workers = [FaceWorker(
             self.precomputed, self.g, self.face_work_queue, self.face_complete_queue) for _ in range(cpu_count())]
         for worker in self.face_workers:
@@ -93,6 +103,9 @@ class Calculate:
             worker.start()
 
     def terminate(self):
+        """
+        Terminates the calculation and cleans up shared memory.
+        """
         for _ in self.face_workers:
             self.face_work_queue.put(None)
         for _ in self.edge_workers:
@@ -119,6 +132,9 @@ class Calculate:
         self.shm_rotations.unlink()
 
     def single_iteration(self, U: np.array, iterations: int):
+        """
+        Performs a single iteration.
+        """
         # Initialization
         e_ij_stars = np.array([U[self.precomputed.ev[i, 1]] - U[self.precomputed.ev[i, 0]]
                                for i in range(self.precomputed.ev.shape[0])])
@@ -155,6 +171,7 @@ class Calculate:
                     self.u_shared[f, i] += self.e_ij_stars_shared[e].dot(
                         self.nf_stars_shared[f])
 
+        # Calculate part of right hand side of the global step.
         start = time()
         E_target_edges_rhs = np.zeros([self.V.shape[0], 3])
         for e in range(self.precomputed.ev.shape[0]):
