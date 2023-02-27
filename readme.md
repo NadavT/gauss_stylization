@@ -15,7 +15,7 @@ You can install conda from [here](https://docs.conda.io/projects/conda/en/stable
 To install the required packages, run
 
 ```sh
-conda config --add channels conda-forge                                                                                                                                                                                 ─╯
+conda config --add channels conda-forge                                                                            
 conda config --set channel_priority strict
 conda env create -f environment.yml
 ```
