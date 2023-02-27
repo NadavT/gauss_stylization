@@ -28,6 +28,8 @@ if __name__ == "__main__":
                         default=0.5, help='Axis contribution in semi-discrete normals (discrete normals contribution when using semi-discrete normals)')
     parser.add_argument('--admm_iterations', type=int,
                         default=1, help="admm iterations to do per gauss stylization update")
+    parser.add_argument('--output_path', type=str,
+                        default='output.obj', help='output path for stylized model, saved as an obj file')
 
     # Load model and sphere (for function representation).
     sphere_v, sphere_f = load(os.path.join(
@@ -143,6 +145,11 @@ if __name__ == "__main__":
         p.reset_camera()
     _ = p.add_text_slider_widget(
         callback=switch_function, data=list(functions_descriptions.keys()), value=0)
+
+    def save_model():
+        igl.write_obj(parser.parse_args().output_path, modified_v, model_f)
+        print(f"Saved model to {parser.parse_args().output_path}")
+    _ = p.add_key_event("s", save_model)
 
     p.show()
     calc.terminate()

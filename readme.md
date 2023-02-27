@@ -54,6 +54,8 @@ options:
                         Axis contribution in semi-discrete normals (discrete normals contribution when using semi-discrete normals) (default: 0.5)
   --admm_iterations ADMM_ITERATIONS
                         admm iterations to do per gauss stylization update (default: 1)
+  --output_path OUTPUT_PATH
+                        output path for stylized model, saved as an obj file (default: output.obj)
 ```
 
 ## User interface
@@ -88,6 +90,7 @@ You can control the stylization using the following controls:
 
 - Press the 'space' key to start stylizing the model (will make the selected number of stylization iterations from the slider).
 - Press the 'z' key to reset the stylization to the initial model.
+- Press the 's' key to save the stylized model to a file.
 
 ### Notes
 
