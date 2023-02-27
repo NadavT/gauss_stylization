@@ -10,7 +10,7 @@ class FaceWorker(Process):
     The face worker calculates n_f*.
     """
 
-    def __init__(self, precomputed: Precompute, g: g_Function, work_queue: Queue, complete_queue: Queue):
+    def __init__(self, precomputed: Precompute, g: g_Function, work_queue: Queue, complete_queue: Queue, random_seed: str):
         """
         Initialize the face worker.
         """
@@ -19,9 +19,9 @@ class FaceWorker(Process):
         self.work_queue = work_queue
         self.complete_queue = complete_queue
 
-        self.shm_e_ij_stars = shared_memory.SharedMemory(name='e_ij_stars')
-        self.shm_nf_stars = shared_memory.SharedMemory(name='nf_stars')
-        self.shm_u = shared_memory.SharedMemory(name='u')
+        self.shm_e_ij_stars = shared_memory.SharedMemory(name='e_ij_stars' + random_seed)
+        self.shm_nf_stars = shared_memory.SharedMemory(name='nf_stars' + random_seed)
+        self.shm_u = shared_memory.SharedMemory(name='u' + random_seed)
 
         super().__init__()
 

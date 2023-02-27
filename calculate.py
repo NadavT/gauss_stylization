@@ -5,6 +5,7 @@ from g_function import g_Function
 from precompute import Precompute
 import igl
 from time import time
+from random import randint
 
 from workers import FaceWorker, EdgeWorker, RotationWorker
 
@@ -22,6 +23,7 @@ class Calculate:
         self.F = F
         self.precomputed = precomputed
         self.g = g
+        self.random_seed = str(randint(0, 10000))
 
         # Create shared memory for calculations.
         e_ij_stars = np.array([V[self.precomputed.ev[i, 1]] - V[self.precomputed.ev[i, 0]]
@@ -29,54 +31,29 @@ class Calculate:
         nf_stars = igl.per_face_normals(V, self.F, np.array([1.0, 0.0, 0.0]))
         u = np.zeros([self.precomputed.ev.shape[0], 3])
         rotations = np.zeros([V.shape[0], 3, 3])
-        try:
-            self.shm_e_ij_stars = shared_memory.SharedMemory(
-                create=True, size=e_ij_stars.nbytes, name="e_ij_stars")
-        except FileExistsError:
-            self.shm_e_ij_stars = shared_memory.SharedMemory(name="e_ij_stars")
-            self.shm_e_ij_stars.unlink()
-            self.shm_e_ij_stars = shared_memory.SharedMemory(
-                create=True, size=e_ij_stars.nbytes, name="e_ij_stars")
+        while True:
+            try:
+                self.shm_e_ij_stars = shared_memory.SharedMemory(
+                    create=True, size=e_ij_stars.nbytes, name="e_ij_stars" + self.random_seed)
+                break
+            except FileExistsError:
+                self.random_seed = str(randint(0, 10000))
         self.e_ij_stars_shared = np.ndarray(
             e_ij_stars.shape, dtype=e_ij_stars.dtype, buffer=self.shm_e_ij_stars.buf)
-        try:
-            self.shm_nf_stars = shared_memory.SharedMemory(
-                create=True, size=nf_stars.nbytes, name="nf_stars")
-        except FileExistsError:
-            self.shm_nf_stars = shared_memory.SharedMemory(name="nf_stars")
-            self.shm_nf_stars.unlink()
-            self.shm_nf_stars = shared_memory.SharedMemory(
-                create=True, size=nf_stars.nbytes, name="nf_stars")
+        self.shm_nf_stars = shared_memory.SharedMemory(
+            create=True, size=nf_stars.nbytes, name="nf_stars" + self.random_seed)
         self.nf_stars_shared = np.ndarray(
             nf_stars.shape, dtype=nf_stars.dtype, buffer=self.shm_nf_stars.buf)
-        try:
-            self.shm_u = shared_memory.SharedMemory(
-                create=True, size=u.nbytes, name="u")
-        except FileExistsError:
-            self.shm_u = shared_memory.SharedMemory(name="u")
-            self.shm_u.unlink()
-            self.shm_u = shared_memory.SharedMemory(
-                create=True, size=u.nbytes, name="u")
+        self.shm_u = shared_memory.SharedMemory(
+            create=True, size=u.nbytes, name="u" + self.random_seed)
         self.u_shared = np.ndarray(
             u.shape, dtype=u.dtype, buffer=self.shm_u.buf)
-        try:
-            self.shm_U = shared_memory.SharedMemory(
-                create=True, size=V.nbytes, name="U")
-        except FileExistsError:
-            self.shm_U = shared_memory.SharedMemory(name="U")
-            self.shm_U.unlink()
-            self.shm_U = shared_memory.SharedMemory(
-                create=True, size=V.nbytes, name="U")
+        self.shm_U = shared_memory.SharedMemory(
+            create=True, size=V.nbytes, name="U" + self.random_seed)
         self.U_shared = np.ndarray(
             V.shape, dtype=V.dtype, buffer=self.shm_U.buf)
-        try:
-            self.shm_rotations = shared_memory.SharedMemory(
-                create=True, size=rotations.nbytes, name="rotations")
-        except FileExistsError:
-            self.shm_rotations = shared_memory.SharedMemory(name="rotations")
-            self.shm_rotations.unlink()
-            self.shm_rotations = shared_memory.SharedMemory(
-                create=True, size=rotations.nbytes, name="rotations")
+        self.shm_rotations = shared_memory.SharedMemory(
+            create=True, size=rotations.nbytes, name="rotations" + self.random_seed)
         self.rotations_shared = np.ndarray(
             rotations.shape, dtype=rotations.dtype, buffer=self.shm_rotations.buf)
 
@@ -90,15 +67,15 @@ class Calculate:
 
         # Start workers.
         self.face_workers = [FaceWorker(
-            self.precomputed, self.g, self.face_work_queue, self.face_complete_queue) for _ in range(cpu_count())]
+            self.precomputed, self.g, self.face_work_queue, self.face_complete_queue, self.random_seed) for _ in range(cpu_count())]
         for worker in self.face_workers:
             worker.start()
         self.edge_workers = [EdgeWorker(
-            self.precomputed, self.g, self.edge_work_queue, self.edge_complete_queue) for _ in range(cpu_count())]
+            self.precomputed, self.g, self.edge_work_queue, self.edge_complete_queue, self.random_seed) for _ in range(cpu_count())]
         for worker in self.edge_workers:
             worker.start()
         self.rotation_workers = [RotationWorker(
-            self.precomputed, self.g, self.rotation_work_queue, self.rotation_complete_queue) for _ in range(cpu_count())]
+            self.precomputed, self.g, self.rotation_work_queue, self.rotation_complete_queue, self.random_seed) for _ in range(cpu_count())]
         for worker in self.rotation_workers:
             worker.start()
 

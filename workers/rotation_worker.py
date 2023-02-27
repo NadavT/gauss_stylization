@@ -9,7 +9,7 @@ class RotationWorker(Process):
     The rotation worker calculates the rotation matrix for each vertex.
     """
 
-    def __init__(self, precomputed: Precompute, g: g_Function, work_queue: Queue, complete_queue: Queue):
+    def __init__(self, precomputed: Precompute, g: g_Function, work_queue: Queue, complete_queue: Queue, random_seed: str):
         """
         Initialize the rotation worker.
         """
@@ -18,9 +18,9 @@ class RotationWorker(Process):
         self.work_queue = work_queue
         self.complete_queue = complete_queue
 
-        self.shm_U = shared_memory.SharedMemory(name='U')
+        self.shm_U = shared_memory.SharedMemory(name='U' + random_seed)
         self.shm_rotations = shared_memory.SharedMemory(
-            name='rotations')
+            name='rotations' + random_seed)
         super().__init__()
 
     def run(self):
