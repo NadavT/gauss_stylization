@@ -88,7 +88,7 @@ You can control the model and the function representation camera using the follo
 
 You can control the stylization using the following controls:
 
-- Press the 'space' key to start stylizing the model (will make the selected number of stylization iterations from the slider).
+- Press the 'space' key to start stylizing the model (the selected number of stylization iterations is set by the slider). 
 - Press the 'z' key to reset the stylization to the initial model.
 - Press the 's' key to save the stylized model to a file.
 
